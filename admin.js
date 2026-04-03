@@ -6,12 +6,15 @@
   var AdminAuth = global.ScriptzAdminAuth || {};
   var panelInited = false;
 
-  // Force dark mode only - no toggle
   function applyTheme() {
     var body = global.document && global.document.body;
     if (!body) return;
-    body.setAttribute('data-theme', 'dark');
-    try { if (global.localStorage) global.localStorage.setItem('scriptz-admin-theme', 'dark'); } catch (e) {}
+    var t = 'dark';
+    try {
+      t = (global.localStorage && global.localStorage.getItem('scriptz-admin-theme')) || 'dark';
+    } catch (e) {}
+    if (t !== 'light' && t !== 'dark') t = 'dark';
+    body.setAttribute('data-theme', t);
   }
 
   var themeBound = false;

@@ -61,8 +61,13 @@
         }
       }).catch(function (err) {
         var msg = (err && err.message) || 'Login failed';
-        if (err && err.status === 401) setErr('admin-login-password-err', 'Invalid email or password.');
-        else setErr('admin-login-email-err', msg);
+        if (err && err.status === 401) {
+          setErr('admin-login-password-err', 'Invalid email or password.');
+        } else if (err && err.status === 403) {
+          setErr('admin-login-password-err', msg);
+        } else {
+          setErr('admin-login-email-err', msg);
+        }
       }).finally(function () {
         if (btn) { btn.disabled = false; btn.textContent = 'Log in'; }
       });

@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Static deploys only: set your API origin (https://…). Leave empty when using npm start + .env -->
+  <meta name="scriptz-api-base" content="">
   <title>Scriptz Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +24,8 @@
       <div class="admin-login-card">
         <div class="admin-login-card-accent"></div>
         <h1 class="admin-login-title">Scriptz Admin</h1>
-        <p class="admin-login-subtitle">Sign in with admin credentials</p>
+        <p class="admin-login-subtitle">Sign in with your Scriptz API admin account (email and password).</p>
+        <p class="admin-login-hint">First time locally? In Scriptz-Api <code>.env</code> set <code>BOOTSTRAP_ADMIN=1</code> plus <code>BOOTSTRAP_ADMIN_EMAIL</code> (use a normal domain, e.g. <code>admin@example.com</code>) and <code>BOOTSTRAP_ADMIN_PASSWORD</code> (8+ chars). Restart the API, then sign in here. See README.</p>
         <form id="admin-login-form" class="admin-form">
           <div class="admin-field">
             <label for="admin-email" class="admin-label">Email</label>

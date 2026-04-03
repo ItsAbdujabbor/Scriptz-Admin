@@ -4,6 +4,7 @@
   "description": "Scriptz Admin — manage scripts, thumbnails, and content",
   "main": "server.js",
   "scripts": {
+    "setup": "node scripts/bootstrap-env.js",
     "start": "node server.js",
     "dev": "node server.js",
     "serve": "node run-serve.js"

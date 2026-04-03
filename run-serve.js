@@ -16,6 +16,10 @@ console.log('  Serving from:', dir);
 console.log('  Open in browser: http://localhost:' + PORT);
 console.log('  Stop with Ctrl+C');
 console.log('');
+console.warn(
+  '  Note: `npm run serve` has NO /api proxy. Use `npm start` for React-style relative /api, or set meta scriptz-api-base + CORS.',
+);
+console.log('');
 
 const child = spawn(
   'npx',

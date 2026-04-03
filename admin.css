@@ -107,7 +107,23 @@ body.admin-body {
 .admin-login-subtitle {
   font-size: 0.9rem;
   color: var(--admin-muted);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.65rem;
+}
+.admin-login-hint {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--admin-muted);
+  opacity: 0.92;
+  margin: 0 0 1.25rem;
+}
+.admin-login-hint code {
+  font-size: 0.72rem;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+body[data-theme="light"] .admin-login-hint code {
+  background: rgba(0, 0, 0, 0.06);
 }
 .admin-form .admin-field { margin-bottom: 1.1rem; }
 .admin-label {

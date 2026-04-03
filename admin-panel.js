@@ -1052,7 +1052,7 @@
               '<h4>Environment</h4><p>Production</p>' +
             '</div>' +
             '<div class="admin-settings-card">' +
-              '<h4>API Base URL</h4><p class="admin-settings-value">' + esc(API.getBaseUrl()) + '</p>' +
+              '<h4>API Base URL</h4><p class="admin-settings-value">' + esc(API.getBaseUrlDisplay ? API.getBaseUrlDisplay() : API.getBaseUrl()) + '</p>' +
             '</div>' +
           '</div>' +
           '<div class="admin-settings-card admin-settings-card--full">' +
@@ -1098,7 +1098,7 @@
       } else if (tabName === 'api') {
         contentEl.innerHTML = '<div class="admin-settings-section">' +
           '<h3 class="admin-settings-section-title">API Configuration</h3>' +
-          '<div class="admin-field"><label class="admin-label">API Base URL</label><input type="text" class="admin-input" value="' + esc(API.getBaseUrl()) + '" disabled></div>' +
+          '<div class="admin-field"><label class="admin-label">API Base URL</label><input type="text" class="admin-input" value="' + esc(API.getBaseUrlDisplay ? API.getBaseUrlDisplay() : API.getBaseUrl()) + '" disabled></div>' +
           '<div class="admin-field"><label class="admin-label">Admin API Endpoint</label><input type="text" class="admin-input" value="/api/admin" disabled></div>' +
           '<div class="admin-field"><label class="admin-label">Rate Limit</label><input type="text" class="admin-input" value="1000 requests/hour" disabled></div>' +
           '<div class="admin-field"><label class="admin-label">CORS Origins</label><input type="text" class="admin-input" value="*" disabled></div>' +
@@ -1121,7 +1121,14 @@
       else if (AdminAuth.fetchAdminProfile) AdminAuth.fetchAdminProfile().then(function (p) { if (p && p.email && emailEl) emailEl.textContent = p.email; }).catch(function () {});
     }
     var logout = byId('admin-sidebar-logout');
-    if (logout) logout.onclick = function () { AdminAuth.logout(); global.location.hash = 'login'; global.location.reload(); };
+    if (logout) {
+      logout.addEventListener('click', function (e) {
+        if (e.preventDefault) e.preventDefault();
+        AdminAuth.logout();
+        global.location.hash = 'login';
+        global.location.reload();
+      });
+    }
     document.querySelectorAll('.admin-sidebar-link').forEach(function (a) {
       a.addEventListener('click', function (e) {
         e.preventDefault();

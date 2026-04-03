@@ -1,111 +1,111 @@
 # Scriptz Admin
 
-Standalone admin panel for Scriptz. Use the same API base URL as the main app (Scriptz-app).
+Standalone admin panel for Scriptz. It talks to **Scriptz-Api** over HTTPS/fetch. Log in with an API user that has **`role=admin`** (email + password, same as `/api/admin/auth/login`).
 
 ---
 
-## How to run (pick one)
+## Quick start (local)
 
-### Option A — From Cursor (recommended)
+### 1. Run Scriptz-Api
 
-1. In Cursor, open the **Scriptz-Admin** folder as the project (File → Open Folder → choose `Scriptz-Admin`).
-2. Open the integrated terminal (Terminal → New Terminal).
-3. Run:
-   ```bash
-   npm run serve
-   ```
-4. In the terminal you’ll see something like: **Open in browser: http://localhost:3001**
-5. Open that URL in your browser. You should see the **Scriptz Admin** login screen (not “Index of”).
+From the API project (with venv if you use one):
 
-If you get a permission error, use Option B or C below.
+```bash
+alembic upgrade head
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
 
----
+Ensure `SECRET_KEY` and `FERNET_KEY` are set in `.env` for anything beyond quick dev (see API `.env.example`).
 
-### Option B — Copy to home with Finder, then serve
+### 2. Create admin credentials (pick one)
 
-macOS may block Terminal from reading your Desktop. Use Finder to copy the app to your home folder, then serve that copy.
+**Option A — Bootstrap on API startup (good for first-time local setup)**  
+In **Scriptz-Api** `.env` add (then restart the API):
 
-1. **Copy the folder**
-   - Open **Finder**.
-   - Go to **Desktop**.
-   - **Copy** the `Scriptz-Admin` folder (⌘C).
-   - Go to your **home** folder (your name in the sidebar, or ⌘⇧H).
-   - **Paste** (⌘V). You should see a folder named `Scriptz-Admin` in your home directory.
+```env
+BOOTSTRAP_ADMIN=1
+BOOTSTRAP_ADMIN_EMAIL=admin@example.com
+BOOTSTRAP_ADMIN_PASSWORD=ChangeMe_Admin123
+```
 
-2. **Check the copy**
-   - Open the copied `Scriptz-Admin` folder in Finder.
-   - Confirm it contains **index.html** and files like **config.js**, **admin.css**, **app.js**, etc. (not an empty folder).
+Use a normal domain for the email (not `.local` / not `admin@localhost`) or the API may reject it at login.
 
-3. **Start the server**
-   - Open **Terminal** (or Cursor’s terminal).
-   - Run:
-     ```bash
-     cd ~
-     npx serve Scriptz-Admin -s -l 3001
-     ```
+- Creates that user as **admin** if they do not exist, or **promotes** them if the email already exists (password is **not** changed for existing users).
+- **Production:** ignored unless you also set `BOOTSTRAP_ADMIN_ALLOW_PRODUCTION=1` (avoid on public servers).
 
-4. **Open the app**
-   - In the terminal you’ll see a line like: **Local: http://localhost:3001**
-   - Open **http://localhost:3001** in your browser (use the root URL only; do **not** add `/Scriptz-Admin/`).
-   - You should see the **Scriptz Admin** login screen.
+**Option B — Script** (from Scriptz-Api root):
 
-To get future code changes from Desktop, copy the `Scriptz-Admin` folder from Desktop to your home folder again (replace the existing one), or edit files in `~/Scriptz-Admin`.
+```bash
+python scripts/create_first_admin.py admin@example.com YourPasswordHere
+```
 
----
+### 3. CORS (only if you use direct API mode)
 
-### Option C — Grant Full Disk Access (then run from Desktop)
+With **`npm start`** and default `.env`, the browser only calls **`/api` on the admin origin** (e.g. `http://localhost:3001/api/...`). The admin server proxies to Scriptz-Api — **no CORS** needed, same idea as **Vite’s `server.proxy['/api']`** in **Scriptz-App-React**.
 
-If you prefer to run from Desktop without copying:
+CORS matters only if you set **`SCRIPTZ_PUBLIC_API_BASE_URL`** (browser talks straight to the API, like **`VITE_API_BASE_URL`**).
 
-1. Open **System Settings** → **Privacy & Security** → **Full Disk Access**.
-2. Click **+** and add **Terminal** (and **Cursor** if you use its terminal).
-3. Quit and reopen Terminal (or Cursor).
-4. Run:
-   ```bash
-   cd /Users/suxrobsattorov/Desktop
-   npx serve Scriptz-Admin -s -l 3001
-   ```
-5. Open **http://localhost:3001** in your browser. You should see the Scriptz Admin login screen.
+### 4. Run Scriptz-Admin
 
----
+```bash
+cd /path/to/Scriptz-Admin
+npm install
+npm run setup   # creates .env from .env.example if missing
+npm start
+```
 
-## After the app is running
+Default `.env` already points the proxy at **`http://127.0.0.1:8000`**; change **`SCRIPTZ_API_BASE_URL`** if your API runs elsewhere.
 
-- **Login:** Use an account that has `role=admin` (same credentials as the main Scriptz app). Only admin accounts can access the panel.
-- **No admin yet?** Create or promote an admin from the **Scriptz-Api** project root:
-  ```bash
-  cd /path/to/Scriptz-Api
-  # Promote an existing user (they must have signed up in the app first):
-  python scripts/create_first_admin.py your@email.com
-  # Or create a new admin user:
-  python scripts/create_first_admin.py admin@example.com YourPassword123
-  ```
-- **Routes:** After login, use the sidebar: Dashboard, Users, Admins & Roles, Audit Logs, Idea Feedback, Billing, Generations, Settings.
-- **API:** Ensure the Scriptz API is running (e.g. `http://127.0.0.1:8000`) and that `config.js` has the correct API base URL. The API must allow CORS for the origin you use (e.g. `http://localhost:3001`).
+Open **http://localhost:3001** (or your `PORT`). Sign in with **email** and **password** from step 2.
+
+With **`npm start`**, the injected **`API_BASE_URL` is empty** and **`fetch('/api/...')`** is same-origin — **same pattern** as **Scriptz-App-React** when **`VITE_API_BASE_URL`** is unset in dev (Vite proxies `/api` to `http://127.0.0.1:8000`). Here, **Express** proxies using **`SCRIPTZ_API_BASE_URL`**.
+
+| React app (Vite) | Scriptz Admin (`npm start`) |
+|------------------|-----------------------------|
+| `server.proxy['/api']` → `127.0.0.1:8000` | Express proxy `/api` → `SCRIPTZ_API_BASE_URL` |
+| `getApiBaseUrl()` → `''` in dev (relative `/api`) | `API_BASE_URL` → `''` (relative `/api`) |
+| Optional `VITE_API_BASE_URL` → direct API + CORS | Optional `SCRIPTZ_PUBLIC_API_BASE_URL` → direct API + CORS |
+
+Do **not** use `npm run serve` / `npx serve` for local dev if you want proxy mode — there is no `/api` proxy. Use **`npm start`**.
+
+### “Failed to fetch” on every screen
+
+- **Use `npm start`**, not plain static hosting, unless you configure a full API URL + CORS.
+- **API not running** on the upstream (`SCRIPTZ_API_BASE_URL`, default `http://127.0.0.1:8000`).
+- **Mixed content** — HTTPS admin page cannot use HTTP API; use HTTPS for both or local HTTP.
+- **Direct mode** (`SCRIPTZ_PUBLIC_API_BASE_URL` set): add your admin origin to **Scriptz-Api** `CORS_ORIGINS` or use `CORS_ALLOW_LOCALHOST_REGEX=1` locally.
 
 ---
 
-## Files in this project
+## How to run (alternative static hosting)
+
+If you cannot use `npm start`, serve this folder as a static site and set **`config.js`** `API_BASE_URL` to your API. You must still satisfy CORS on the API for that origin.
+
+---
+
+## After login
+
+Sidebar: Dashboard, Users, Admins & Roles, Audit Logs, Idea Feedback, Thumbnail templates, Billing, Generations, Settings.
+
+---
+
+## Files
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Login screen and panel shell |
-| `config.js` | API base URL |
-| `api.js` | Admin auth and admin API client |
+| `index.html` | Login + panel shell |
+| `config.js` | Default API URL (overridden by server `/config.js` when using `npm start`) |
+| `api.js` | Admin auth + admin HTTP client |
 | `auth.js` | Token storage and refresh |
-| `admin-auth.js` | Admin profile and guards |
-| `admin.js` | Init and panel setup |
-| `admin-panel.js` | Panel pages (dashboard, users, audit, etc.) |
-| `app.js` | Router (login vs panel, guard by admin role) |
-| `dialog.js`, `ui-components.js` | Confirm and toast |
-| `admin.css` | Full theme (login, panel, tables, modals, toasts) |
-| `run-serve.js` | Serves this folder at `/` so the UI loads (no directory listing) |
-| `server.js` | Express server (alternative to `npx serve`) |
+| `admin-auth.js` | Admin checks |
+| `admin.js` | Panel init |
+| `admin-panel.js` | Pages |
+| `app.js` | Hash router (login vs panel) |
+| `server.js` | Express: SPA + dynamic `config.js` from `.env` |
+| `.env.example` | `PORT`, `SCRIPTZ_API_BASE_URL`, optional `SCRIPTZ_PUBLIC_API_BASE_URL`, `SCRIPTZ_ADMIN_API_PROXY` |
 
 ---
 
 ## Link from the main app
 
-To open the admin panel from the main Scriptz app, link to the URL where Scriptz-Admin is served (e.g. `http://localhost:3001` or `https://your-domain.com/admin/`).
-# Scriptz-Admin
-# Scriptz-Admin
+Point users with the admin role to wherever Scriptz-Admin is hosted (for example `http://localhost:3001` in development).

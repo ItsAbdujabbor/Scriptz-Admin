@@ -5,7 +5,66 @@
 (function (global) {
   'use strict';
 
-  var BASE = (global.SCRIPTZ_CONFIG && global.SCRIPTZ_CONFIG.API_BASE_URL) || 'http://localhost:8000';
+  /**
+   * Same contract as Scriptz-App-React getApiBaseUrl():
+   * - ''  → fetch('/api/...') same-origin; dev server proxies to FastAPI (here: Express).
+   * - non-empty → absolute API origin (direct calls; CORS required).
+   */
+  function apiBaseUrl() {
+    var cfg = global.SCRIPTZ_CONFIG;
+    if (!cfg || cfg.API_BASE_URL === undefined || cfg.API_BASE_URL === null) {
+      return 'http://127.0.0.1:8000';
+    }
+    var s = String(cfg.API_BASE_URL).trim();
+    if (s === '') return '';
+    return s.replace(/\/$/, '');
+  }
+
+  /** Human-readable base for settings UI */
+  function apiBaseUrlDisplay() {
+    var b = apiBaseUrl();
+    if (b !== '') return b;
+    try {
+      var o = global.location && global.location.origin ? global.location.origin : '';
+      return o ? o + ' (relative /api — same as Vite dev proxy)' : '(relative /api)';
+    } catch (e) {
+      return '(relative /api)';
+    }
+  }
+
+  function networkErrorMessage(url, cause) {
+    var base = apiBaseUrl();
+    var origin = '';
+    try {
+      origin = global.location && global.location.origin ? global.location.origin : '';
+    } catch (e) {}
+    var pageHttps = origin.indexOf('https:') === 0;
+    var effectiveApi = base === '' ? origin : base;
+    var apiHttp = effectiveApi.indexOf('http:') === 0;
+    var parts = [
+      'Cannot reach the Scriptz API (requested: ' + url + ').',
+    ];
+    if (base === '') {
+      parts.push(
+        'You are in proxy mode (like the React app): the browser calls ' +
+          origin +
+          '/api/… and this admin server forwards to SCRIPTZ_API_BASE_URL. Start the API on that upstream, run `npm start` (not npx serve), and restart the admin after .env changes.',
+      );
+    } else {
+      parts.push('Configured API base: ' + base + '.');
+    }
+    if (pageHttps && apiHttp) {
+      parts.push(
+        'HTTPS page with HTTP API is blocked (mixed content). Use an https API URL or http://localhost for local dev.',
+      );
+    } else if (base !== '') {
+      parts.push(
+        'Direct mode: ensure CORS on Scriptz-Api allows origin ' + (origin || 'unknown') + ' (or use default proxy mode: unset SCRIPTZ_PUBLIC_API_BASE_URL).',
+      );
+    }
+    if (cause && cause.message) parts.push('Browser: ' + cause.message);
+    return parts.join(' ');
+  }
 
   function getAuthHeaders(extra) {
     var token = global.ScriptzAuth && global.ScriptzAuth.getAccessToken && global.ScriptzAuth.getAccessToken();
@@ -24,7 +83,11 @@
   function checkStatus(res) {
     if (res.ok) return res;
     return parseJson(res).then(function (body) {
-      var msg = (body && (body.detail || body.message)) || res.statusText;
+      var msg =
+        (body && body.error && body.error.message) ||
+        (body && body.detail) ||
+        (body && body.message) ||
+        res.statusText;
       if (typeof msg === 'object' && msg.msg) msg = msg.msg;
       var err = new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
       err.status = res.status;
@@ -39,12 +102,26 @@
   }
 
   function doRequest(method, path, body, useAuth, extraHeaders) {
-    var url = BASE + path;
+    var base = apiBaseUrl();
+    var url = base === '' ? path : base + path;
     var headers = useAuth ? getAuthHeaders(extraHeaders) : { 'Content-Type': 'application/json' };
     if (extraHeaders) for (var k in extraHeaders) headers[k] = extraHeaders[k];
     var opts = { method: method, headers: headers };
     if (body !== undefined) opts.body = JSON.stringify(body);
-    return fetch(url, opts).then(checkStatus).then(parseJson);
+    return fetch(url, opts)
+      .catch(function (err) {
+        var name = err && err.name;
+        var msg = err && err.message ? String(err.message) : '';
+        if (name === 'TypeError' || msg.indexOf('Failed to fetch') !== -1 || msg.indexOf('NetworkError') !== -1) {
+          var wrapped = new Error(networkErrorMessage(url, err));
+          wrapped.status = 0;
+          wrapped.cause = err;
+          throw wrapped;
+        }
+        throw err;
+      })
+      .then(checkStatus)
+      .then(parseJson);
   }
 
   var adminAuthApi = {
@@ -168,7 +245,7 @@
         return adminRequest('DELETE', '/api/admin/thumbnail-templates/' + id);
       },
       categories: function () {
-        return adminRequest('GET', '/api/admin/thumbnail-templates/categories');
+        return adminRequest('GET', '/api/thumbnail-templates/categories');
       },
       toggleActive: function (id, isActive) {
         return adminRequest('PATCH', '/api/admin/thumbnail-templates/' + id, { is_active: isActive });
@@ -221,6 +298,7 @@
   global.ScriptzAPI = {
     adminAuth: adminAuthApi,
     admin: adminApi,
-    getBaseUrl: function () { return BASE; },
+    getBaseUrl: apiBaseUrl,
+    getBaseUrlDisplay: apiBaseUrlDisplay,
   };
 })(typeof window !== 'undefined' ? window : this);

@@ -1,4 +1,6 @@
 node_modules/
 .env
 .env.local
+LOCAL_ADMIN_LOGIN.txt
+*.bak
 .DS_Store
