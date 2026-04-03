@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scriptz Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+  <script>
+  (function(){
+    var theme = (typeof localStorage !== 'undefined' && localStorage.getItem('scriptz-admin-theme')) || 'dark';
+    document.body.setAttribute('data-theme', theme);
+  })();
+  </script>
+  <div id="admin-root">
+    <!-- Login -->
+    <div id="admin-login-screen" class="admin-screen admin-screen--active">
+      <div class="admin-login-card">
+        <div class="admin-login-card-accent"></div>
+        <h1 class="admin-login-title">Scriptz Admin</h1>
+        <p class="admin-login-subtitle">Sign in with admin credentials</p>
+        <form id="admin-login-form" class="admin-form">
+          <div class="admin-field">
+            <label for="admin-email" class="admin-label">Email</label>
+            <input type="email" id="admin-email" name="email" class="admin-input" required autocomplete="email" placeholder="admin@example.com">
+            <p id="admin-login-email-err" class="admin-field-err" aria-live="polite"></p>
+          </div>
+          <div class="admin-field">
+            <label for="admin-password" class="admin-label">Password</label>
+            <input type="password" id="admin-password" name="password" class="admin-input" required autocomplete="current-password" placeholder="Password">
+            <p id="admin-login-password-err" class="admin-field-err" aria-live="polite"></p>
+          </div>
+          <button type="submit" class="admin-btn admin-btn--primary admin-btn--block admin-btn--lg" id="admin-login-btn">Log in</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Panel -->
+    <div id="admin-panel-screen" class="admin-screen admin-screen--hidden">
+      <div class="admin-layout">
+        <aside class="admin-sidebar">
+          <div class="admin-sidebar-brand">
+            <span class="admin-sidebar-brand-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg>
+            </span>
+            <span class="admin-sidebar-brand-text">Scriptz Admin</span>
+          </div>
+          <div class="admin-sidebar-head">
+            <span class="admin-sidebar-email" id="admin-sidebar-email">—</span>
+            <button type="button" class="admin-sidebar-logout" id="admin-sidebar-logout">Log out</button>
+            <div class="admin-theme-toggle" aria-label="Theme">
+              <span class="admin-theme-toggle-label">Theme</span>
+              <div class="admin-theme-toggle-btns">
+                <button type="button" class="admin-theme-btn" id="admin-theme-dark" aria-pressed="true">Dark</button>
+                <button type="button" class="admin-theme-btn" id="admin-theme-light" aria-pressed="false">Light</button>
+              </div>
+            </div>
+          </div>
+          <nav class="admin-sidebar-nav" aria-label="Admin navigation">
+            <a href="#admin-dashboard" class="admin-sidebar-link" data-page="dashboard"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="admin-sidebar-label">Dashboard</span></a>
+            <a href="#admin-users" class="admin-sidebar-link" data-page="users"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="admin-sidebar-label">Users</span></a>
+            <a href="#admin-admins" class="admin-sidebar-link" data-page="admins"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="admin-sidebar-label">Admins &amp; Roles</span></a>
+            <a href="#admin-audit" class="admin-sidebar-link" data-page="audit"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span><span class="admin-sidebar-label">Audit Logs</span></a>
+            <a href="#admin-ideas" class="admin-sidebar-link" data-page="ideas"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span><span class="admin-sidebar-label">Idea Feedback</span></a>
+            <a href="#admin-templates" class="admin-sidebar-link" data-page="templates"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span><span class="admin-sidebar-label">Thumbnail templates</span></a>
+            <a href="#admin-billing" class="admin-sidebar-link" data-page="billing"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span><span class="admin-sidebar-label">Billing</span></a>
+            <a href="#admin-generations" class="admin-sidebar-link" data-page="generations"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l2-6 2 4 2-4 2 6"/></svg></span><span class="admin-sidebar-label">Generations</span></a>
+            <a href="#admin-settings" class="admin-sidebar-link" data-page="settings"><span class="admin-sidebar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="admin-sidebar-label">Settings</span></a>
+          </nav>
+        </aside>
+        <main class="admin-main" id="admin-main">
+          <div id="admin-page" class="admin-page"></div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-modal" class="admin-modal" aria-hidden="true" role="dialog">
+    <div class="admin-modal-backdrop" id="admin-modal-backdrop"></div>
+    <div class="admin-modal-box">
+      <div class="admin-modal-head">
+        <h2 class="admin-modal-title" id="admin-modal-title">Title</h2>
+        <button type="button" class="admin-modal-close" id="admin-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="admin-modal-body" id="admin-modal-body"></div>
+    </div>
+  </div>
+
+  <div id="app-confirm-dialog" class="admin-modal" aria-hidden="true" role="alertdialog">
+    <div class="admin-modal-backdrop"></div>
+    <div class="admin-modal-box">
+      <div class="admin-modal-head">
+        <h2 id="app-confirm-title" class="admin-modal-title">Confirm</h2>
+        <button type="button" class="admin-modal-close" id="app-confirm-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="admin-modal-body">
+        <p id="app-confirm-message" class="admin-confirm-msg"></p>
+        <div class="admin-modal-actions">
+          <button type="button" id="app-confirm-cancel" class="admin-btn admin-btn--outline">Cancel</button>
+          <button type="button" id="app-confirm-ok" class="admin-btn admin-btn--primary">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="app-toast-container" class="admin-toast-root" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="auth.js"></script>
+  <script src="admin-auth.js"></script>
+  <script src="dialog.js"></script>
+  <script src="ui-components.js"></script>
+  <script src="admin.js"></script>
+  <script src="admin-panel.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
