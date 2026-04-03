@@ -6,16 +6,12 @@
   var AdminAuth = global.ScriptzAdminAuth || {};
   var panelInited = false;
 
-  function applyTheme(theme) {
+  // Force dark mode only - no toggle
+  function applyTheme() {
     var body = global.document && global.document.body;
     if (!body) return;
-    theme = theme || 'dark';
-    body.setAttribute('data-theme', theme);
-    try { if (global.localStorage) global.localStorage.setItem('scriptz-admin-theme', theme); } catch (e) {}
-    var darkBtn = document.getElementById('admin-theme-dark');
-    var lightBtn = document.getElementById('admin-theme-light');
-    if (darkBtn) { darkBtn.classList.toggle('is-active', theme === 'dark'); darkBtn.setAttribute('aria-pressed', theme === 'dark'); }
-    if (lightBtn) { lightBtn.classList.toggle('is-active', theme === 'light'); lightBtn.setAttribute('aria-pressed', theme === 'light'); }
+    body.setAttribute('data-theme', 'dark');
+    try { if (global.localStorage) global.localStorage.setItem('scriptz-admin-theme', 'dark'); } catch (e) {}
   }
 
   var themeBound = false;
@@ -26,12 +22,7 @@
       panelInited = true;
       if (!themeBound) {
         themeBound = true;
-        var darkBtn = document.getElementById('admin-theme-dark');
-        var lightBtn = document.getElementById('admin-theme-light');
-        if (darkBtn) darkBtn.addEventListener('click', function () { applyTheme('dark'); });
-        if (lightBtn) lightBtn.addEventListener('click', function () { applyTheme('light'); });
-        var cur = (global.document && global.document.body && global.document.body.getAttribute('data-theme')) || 'dark';
-        applyTheme(cur);
+        applyTheme();
       }
     }
     if (panel && panel.navigate) {
