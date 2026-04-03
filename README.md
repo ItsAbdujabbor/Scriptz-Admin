@@ -108,3 +108,4 @@ If you prefer to run from Desktop without copying:
 
 To open the admin panel from the main Scriptz app, link to the URL where Scriptz-Admin is served (e.g. `http://localhost:3001` or `https://your-domain.com/admin/`).
 # Scriptz-Admin
+# Scriptz-Admin
