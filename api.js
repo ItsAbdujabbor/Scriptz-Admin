@@ -167,6 +167,54 @@
       delete: function (id) {
         return adminRequest('DELETE', '/api/admin/thumbnail-templates/' + id);
       },
+      categories: function () {
+        return adminRequest('GET', '/api/admin/thumbnail-templates/categories');
+      },
+      toggleActive: function (id, isActive) {
+        return adminRequest('PATCH', '/api/admin/thumbnail-templates/' + id, { is_active: isActive });
+      },
+    },
+    generations: {
+      list: function (params) {
+        var q = new URLSearchParams();
+        if (params) {
+          if (params.limit != null) q.set('limit', params.limit);
+          if (params.offset != null) q.set('offset', params.offset);
+          if (params.user_id) q.set('user_id', params.user_id);
+          if (params.feature_type) q.set('feature_type', params.feature_type);
+          if (params.from_date) q.set('from_date', params.from_date);
+          if (params.to_date) q.set('to_date', params.to_date);
+          if (params.model) q.set('model', params.model);
+        }
+        var query = q.toString();
+        return adminRequest('GET', '/api/admin/generations' + (query ? '?' + query : ''));
+      },
+      get: function (id) {
+        return adminRequest('GET', '/api/admin/generations/' + id);
+      },
+      getStats: function () {
+        return adminRequest('GET', '/api/admin/generations/stats');
+      },
+    },
+    settings: {
+      get: function () {
+        return adminRequest('GET', '/api/admin/settings');
+      },
+      update: function (body) {
+        return adminRequest('PATCH', '/api/admin/settings', body);
+      },
+      getFeatureFlags: function () {
+        return adminRequest('GET', '/api/admin/settings/feature-flags');
+      },
+      updateFeatureFlag: function (key, value) {
+        return adminRequest('PATCH', '/api/admin/settings/feature-flags/' + key, { enabled: value });
+      },
+      getModels: function () {
+        return adminRequest('GET', '/api/admin/settings/models');
+      },
+      updateModel: function (model, enabled) {
+        return adminRequest('PATCH', '/api/admin/settings/models/' + model, { enabled: enabled });
+      },
     },
   };
 
