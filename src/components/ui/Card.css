@@ -1,0 +1,22 @@
+.ui-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: fade-in var(--motion) var(--ease);
+  transition: border-color var(--motion-fast) var(--ease),
+    transform var(--motion-fast) var(--ease);
+}
+.ui-card:hover { border-color: rgba(255, 255, 255, 0.12); }
+.ui-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.ui-card-title { margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.ui-card-subtitle { margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary); }
+.ui-card-actions { display: flex; gap: 8px; align-items: center; }
+.ui-card-body.padded { padding: 18px; }
