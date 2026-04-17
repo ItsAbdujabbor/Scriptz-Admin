@@ -99,4 +99,51 @@ export async function apiFetch(path, { method = "GET", params, body, headers, si
   return data;
 }
 
+/**
+ * Multipart upload helper — for endpoints that accept FormData instead of
+ * JSON. Same auth + refresh behavior as `apiFetch`; we just hand the
+ * FormData straight to fetch and let the browser set Content-Type
+ * (including the boundary).
+ */
+export async function apiUpload(path, { method = "POST", form, headers, signal } = {}) {
+  if (!(form instanceof FormData)) {
+    throw new TypeError("apiUpload requires a FormData 'form' argument");
+  }
+  const url = buildUrl(path);
+  const token = useAuthStore.getState().getAccessToken();
+  const doRequest = (accessToken) =>
+    fetch(url, {
+      method,
+      headers: {
+        Accept: "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...(headers || {}),
+      },
+      body: form,
+      signal,
+    });
+
+  let res = await doRequest(token);
+  if (res.status === 401 && token) {
+    const newToken = await attemptRefresh();
+    if (newToken) {
+      res = await doRequest(newToken);
+    } else {
+      useAuthStore.getState().clear();
+      if (!window.location.hash.startsWith("#/login")) {
+        window.location.hash = "/login";
+      }
+    }
+  }
+
+  const data = await parseResponse(res);
+  if (!res.ok) {
+    const message =
+      (data && (data.error?.message || data.message || data.detail)) ||
+      `Upload failed (${res.status})`;
+    throw new ApiError(message, res.status, data);
+  }
+  return data;
+}
+
 export { ApiError };

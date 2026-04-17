@@ -4,6 +4,7 @@ import {
   BarChart3,
   Tv,
   Library,
+  ImagePlus,
   FileText,
   Settings,
   LogOut,
@@ -18,6 +19,7 @@ const NAV = [
   { key: "analytics", label: "Analytics", icon: BarChart3, path: "/analytics" },
   { key: "channels", label: "Channels", icon: Tv, path: "/channels" },
   { key: "content", label: "Content", icon: Library, path: "/content" },
+  { key: "thumbnail-refs", label: "Thumbnail refs", icon: ImagePlus, path: "/thumbnail-refs" },
   { key: "logs", label: "Logs", icon: FileText, path: "/logs" },
   { key: "config", label: "Config", icon: Settings, path: "/config" },
 ];
