@@ -1,4 +1,11 @@
 node_modules/
+dist/
 .env
 .env.local
+LOCAL_ADMIN_LOGIN.txt
+*.bak
 .DS_Store
+
+# Claude Code local config
+.claude/
+CLAUDE.md

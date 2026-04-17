@@ -1,111 +1,52 @@
 # Scriptz Admin
 
-Standalone admin panel for Scriptz. Use the same API base URL as the main app (Scriptz-app).
+Dark-themed admin panel for the Scriptz platform. Built with **React 19 + Vite**, talks to `Scriptz-Api` (`/api/admin/**`).
 
----
+All admin auth, routing, and UI live here — the main `Scriptz-app` has no admin code.
 
-## How to run (pick one)
+## Features
 
-### Option A — From Cursor (recommended)
+- Dashboard with KPIs and usage charts
+- Users: search, filter, ban/unban, role changes, per-user activity and credits
+- Analytics: growth, per-feature usage, revenue (credits purchased/consumed)
+- Content oversight: personas, styles, thumbnail templates, user idea-feedback
+- Logs: audit trail, usage events, unhandled errors
+- Config: feature flag toggles, billing snapshot (read-only), env snapshot
 
-1. In Cursor, open the **Scriptz-Admin** folder as the project (File → Open Folder → choose `Scriptz-Admin`).
-2. Open the integrated terminal (Terminal → New Terminal).
-3. Run:
-   ```bash
-   npm run serve
-   ```
-4. In the terminal you’ll see something like: **Open in browser: http://localhost:3001**
-5. Open that URL in your browser. You should see the **Scriptz Admin** login screen (not “Index of”).
+## Quick start
 
-If you get a permission error, use Option B or C below.
+```bash
+npm install
+cp .env.example .env    # (optional) override VITE_API_BASE_URL for prod
+npm run dev             # http://localhost:3001
+```
 
----
+In dev, Vite proxies `/api` to `http://127.0.0.1:8000` so no CORS setup is needed.
 
-### Option B — Copy to home with Finder, then serve
+Sign in with any `Scriptz-Api` user that has `role = "admin"`. The `BOOTSTRAP_ADMIN_*` envs in Scriptz-Api seed one on first startup.
 
-macOS may block Terminal from reading your Desktop. Use Finder to copy the app to your home folder, then serve that copy.
+## Architecture
 
-1. **Copy the folder**
-   - Open **Finder**.
-   - Go to **Desktop**.
-   - **Copy** the `Scriptz-Admin` folder (⌘C).
-   - Go to your **home** folder (your name in the sidebar, or ⌘⇧H).
-   - **Paste** (⌘V). You should see a folder named `Scriptz-Admin` in your home directory.
+```
+src/
+  api/           # fetch wrapper + one module per domain (auth, users, analytics, …)
+  queries/       # React Query client + hook/key registry
+  stores/        # Zustand auth store (localStorage-backed)
+  components/
+    Layout/      # AdminShell, Sidebar, TopBar
+    ui/          # Button, Card, DataTable, Modal, Drawer, Toast, Input, Tabs, …
+    charts/      # tiny SVG line chart
+    shared/      # StatCard
+  pages/         # one folder per section — Login, Dashboard, users/, analytics/, content/, logs/, config/
+  theme.css      # design tokens (ported from Scriptz-app ios-theme.css)
+  global.css     # base layout + scrollbars
+```
 
-2. **Check the copy**
-   - Open the copied `Scriptz-Admin` folder in Finder.
-   - Confirm it contains **index.html** and files like **config.js**, **admin.css**, **app.js**, etc. (not an empty folder).
+All requests flow through `src/api/client.js`, which injects `Authorization: Bearer …` and auto-refreshes on 401.
 
-3. **Start the server**
-   - Open **Terminal** (or Cursor’s terminal).
-   - Run:
-     ```bash
-     cd ~
-     npx serve Scriptz-Admin -s -l 3001
-     ```
+## Build
 
-4. **Open the app**
-   - In the terminal you’ll see a line like: **Local: http://localhost:3001**
-   - Open **http://localhost:3001** in your browser (use the root URL only; do **not** add `/Scriptz-Admin/`).
-   - You should see the **Scriptz Admin** login screen.
-
-To get future code changes from Desktop, copy the `Scriptz-Admin` folder from Desktop to your home folder again (replace the existing one), or edit files in `~/Scriptz-Admin`.
-
----
-
-### Option C — Grant Full Disk Access (then run from Desktop)
-
-If you prefer to run from Desktop without copying:
-
-1. Open **System Settings** → **Privacy & Security** → **Full Disk Access**.
-2. Click **+** and add **Terminal** (and **Cursor** if you use its terminal).
-3. Quit and reopen Terminal (or Cursor).
-4. Run:
-   ```bash
-   cd /Users/suxrobsattorov/Desktop
-   npx serve Scriptz-Admin -s -l 3001
-   ```
-5. Open **http://localhost:3001** in your browser. You should see the Scriptz Admin login screen.
-
----
-
-## After the app is running
-
-- **Login:** Use an account that has `role=admin` (same credentials as the main Scriptz app). Only admin accounts can access the panel.
-- **No admin yet?** Create or promote an admin from the **Scriptz-Api** project root:
-  ```bash
-  cd /path/to/Scriptz-Api
-  # Promote an existing user (they must have signed up in the app first):
-  python scripts/create_first_admin.py your@email.com
-  # Or create a new admin user:
-  python scripts/create_first_admin.py admin@example.com YourPassword123
-  ```
-- **Routes:** After login, use the sidebar: Dashboard, Users, Admins & Roles, Audit Logs, Idea Feedback, Billing, Generations, Settings.
-- **API:** Ensure the Scriptz API is running (e.g. `http://127.0.0.1:8000`) and that `config.js` has the correct API base URL. The API must allow CORS for the origin you use (e.g. `http://localhost:3001`).
-
----
-
-## Files in this project
-
-| File | Purpose |
-|------|---------|
-| `index.html` | Login screen and panel shell |
-| `config.js` | API base URL |
-| `api.js` | Admin auth and admin API client |
-| `auth.js` | Token storage and refresh |
-| `admin-auth.js` | Admin profile and guards |
-| `admin.js` | Init and panel setup |
-| `admin-panel.js` | Panel pages (dashboard, users, audit, etc.) |
-| `app.js` | Router (login vs panel, guard by admin role) |
-| `dialog.js`, `ui-components.js` | Confirm and toast |
-| `admin.css` | Full theme (login, panel, tables, modals, toasts) |
-| `run-serve.js` | Serves this folder at `/` so the UI loads (no directory listing) |
-| `server.js` | Express server (alternative to `npx serve`) |
-
----
-
-## Link from the main app
-
-To open the admin panel from the main Scriptz app, link to the URL where Scriptz-Admin is served (e.g. `http://localhost:3001` or `https://your-domain.com/admin/`).
-# Scriptz-Admin
-# Scriptz-Admin
+```bash
+npm run build
+npm run preview
+```

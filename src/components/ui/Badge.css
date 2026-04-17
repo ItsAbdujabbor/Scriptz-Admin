@@ -1,0 +1,19 @@
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  min-height: 22px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  text-transform: capitalize;
+}
+.ui-badge.tone-neutral { background: var(--bg-tertiary); color: var(--text-secondary); border-color: var(--border); }
+.ui-badge.tone-accent { background: var(--accent-soft); color: var(--accent-hover); }
+.ui-badge.tone-success { background: rgba(48, 209, 88, 0.14); color: var(--green); }
+.ui-badge.tone-danger { background: rgba(255, 69, 58, 0.14); color: var(--red); }
+.ui-badge.tone-warning { background: rgba(255, 214, 10, 0.16); color: var(--yellow); }
+.ui-badge.tone-info { background: rgba(10, 132, 255, 0.16); color: var(--blue); }
