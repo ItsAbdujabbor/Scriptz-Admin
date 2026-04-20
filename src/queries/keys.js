@@ -12,7 +12,6 @@ export const qk = {
   channelsSummary: (minSubs) => ["channels-summary", minSubs],
   cloudCosts: (days) => ["cloud-costs", days],
   finance: (days) => ["finance", days],
-  personas: (params) => ["personas", params || {}],
   styles: (params) => ["styles", params || {}],
   templates: (params) => ["templates", params || {}],
   feedback: (params) => ["feedback", params || {}],

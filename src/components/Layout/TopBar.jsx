@@ -15,7 +15,7 @@ const SUBTITLES = {
   users: "Manage accounts, credits, and access",
   analytics: "Growth, usage, and revenue",
   channels: "Connected YouTube channels, 10K+ subscribers",
-  content: "Personas, styles, templates, and feedback",
+  content: "Styles, thumbnail templates, and feedback",
   logs: "Audit trail, usage events, errors",
   config: "Feature flags, billing, cloud costs, environment",
 };

@@ -8,7 +8,12 @@ const crud = (base) => ({
 });
 
 export const contentApi = {
-  personas: crud("personas"),
+  // Personas are user-private and not administered from the admin app.
+  // The only admin-side persona operation is the one-shot purge:
+  //   DELETE /api/admin/content/personas/purge-stock
+  // which wipes legacy rows where user_id IS NULL.
+  personasPurgeStock: () =>
+    apiFetch(`/api/admin/content/personas/purge-stock`, { method: "DELETE" }),
   styles: crud("styles"),
   templates: crud("thumbnail-templates"),
   feedback: {
