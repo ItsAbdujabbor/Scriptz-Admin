@@ -10,7 +10,6 @@ import UsersList from "./pages/users/UsersList";
 import Analytics from "./pages/analytics/Analytics";
 import Channels from "./pages/channels/Channels";
 import ContentHub from "./pages/content/ContentHub";
-import ThumbnailRefsPanel from "./pages/thumbnail-refs/ThumbnailRefsPanel";
 import Logs from "./pages/logs/Logs";
 import Config from "./pages/config/Config";
 
@@ -65,7 +64,6 @@ export default function App() {
     case "analytics": Page = Analytics; break;
     case "channels": Page = Channels; break;
     case "content": Page = ContentHub; break;
-    case "thumbnail-refs": Page = ThumbnailRefsPanel; break;
     case "logs": Page = Logs; break;
     case "config": Page = Config; break;
     default: Page = Dashboard;

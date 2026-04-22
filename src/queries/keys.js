@@ -21,6 +21,4 @@ export const qk = {
   flags: ["feature-flags"],
   billing: ["billing-snapshot"],
   env: ["env-snapshot"],
-  thumbnailRefs: (params) => ["thumbnail-refs", params || {}],
-  thumbnailRefTopicClasses: ["thumbnail-refs", "topic-classes"],
 };
