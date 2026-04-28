@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
@@ -24,104 +25,137 @@ import Badge from "../components/ui/Badge";
 import LineChart from "../components/charts/LineChart";
 import PieChart from "../components/charts/PieChart";
 import { formatCurrency, formatNumber } from "../lib/format";
+import "./Dashboard.css";
+
+const PROVIDER_TONE = { aws: "#ff9f0a", gcp: "#0a84ff" };
+
+// Auto-refresh cadences. Each query polls itself while the dashboard is mounted
+// AND the browser tab is visible — React Query's default `refetchIntervalInBackground:
+// false` pauses these timers when the tab is hidden, which gives us the
+// "refresh only for active admins" guarantee on the client side. The matching
+// server cache (see services/admin/dashboard_cache.py) absorbs the load if
+// multiple admins poll simultaneously.
+const REFRESH_KPIS_MS = 60_000;        // overview is the "live" feeling card
+const REFRESH_SERIES_MS = 5 * 60_000;  // daily series barely move within a day
+const REFRESH_CLOUD_MS = 15 * 60_000;  // AWS Cost Explorer is paid — keep this slow
 
 export default function Dashboard() {
-  const overview = useQuery({ queryKey: qk.analyticsOverview, queryFn: analyticsApi.overview });
+  const overview = useQuery({
+    queryKey: qk.analyticsOverview,
+    queryFn: analyticsApi.overview,
+    refetchInterval: REFRESH_KPIS_MS,
+  });
   const growth = useQuery({
     queryKey: qk.analyticsGrowth("30d"),
     queryFn: () => analyticsApi.growth("30d"),
+    refetchInterval: REFRESH_SERIES_MS,
   });
   const usage = useQuery({
     queryKey: qk.analyticsUsage("30d"),
     queryFn: () => analyticsApi.usage("30d"),
+    refetchInterval: REFRESH_SERIES_MS,
   });
   const costs = useQuery({
     queryKey: qk.cloudCosts(30),
     queryFn: () => costsApi.cloud(30),
+    refetchInterval: REFRESH_CLOUD_MS,
   });
   const finance = useQuery({
     queryKey: qk.finance(30),
     queryFn: () => analyticsApi.finance(30),
+    refetchInterval: REFRESH_SERIES_MS,
   });
-
-  const o = overview.data || {};
-  const fin = finance.data;
 
   return (
     <div className="page">
-      {/* KPI cards */}
-      <div className="grid grid-4" style={{ marginBottom: "var(--space-5)" }}>
-        <StatCard label="Total users" value={o.total_users} icon={Users} tone="info" />
-        <StatCard
-          label="New users (7d)"
-          value={o.new_users_7d}
-          icon={UserPlus}
-          tone="success"
-          hint={`${formatNumber(o.new_users_30d)} in 30d`}
-        />
-        <StatCard label="Active (24h)" value={o.active_users_24h} icon={Activity} tone="warning" />
-        <StatCard
-          label="Active (30d)"
-          value={o.active_users_30d}
-          icon={Flame}
-          tone="danger"
-          hint={`${formatNumber(o.active_users_7d)} in 7d`}
-        />
-        <StatCard label="Paying users" value={o.paying_users} icon={Wallet} />
-        <StatCard
-          label="MRR"
-          value={formatCurrency(o.mrr_usd)}
-          icon={CircleDollarSign}
-          tone="success"
-          formatter={(v) => v}
-        />
-        <StatCard
-          label="Credits used (7d)"
-          value={o.credits_consumed_7d}
-          icon={Zap}
-          tone="warning"
-          hint={`${formatNumber(o.total_events_7d)} events`}
-        />
-        <StatCard label="Admins" value={o.admins} icon={ShieldCheck} />
-      </div>
+      {overview.data && <KpiGrid data={overview.data} />}
 
-      {/* Financial health — revenue, cost, profit */}
-      {fin && <FinancialHealth fin={fin} loading={finance.isLoading} />}
+      {finance.data ? <FinancialHealth fin={finance.data} /> : null}
 
-      {/* Growth + usage line charts */}
-      <div className="grid grid-2" style={{ margin: "var(--space-5) 0" }}>
-        <Card title="Signups" subtitle="Last 30 days">
-          <LineChart data={growth.data?.signups || []} />
+      {(growth.data || usage.data) && (
+        <div className="grid grid-2" style={{ margin: "var(--space-5) 0" }}>
+          {growth.data && (
+            <Card title="Signups" subtitle="Last 30 days">
+              <LineChart data={growth.data?.signups || []} />
+            </Card>
+          )}
+          {usage.data && (
+            <Card title="Usage events" subtitle="Last 30 days">
+              <LineChart data={usage.data?.points || []} color="var(--blue)" />
+            </Card>
+          )}
+        </div>
+      )}
+
+      {costs.data && (
+        <div className="grid grid-2" style={{ marginBottom: "var(--space-5)" }}>
+          <ProviderCard
+            title="AWS"
+            icon={Cloud}
+            provider={costs.data?.aws}
+            accent={PROVIDER_TONE.aws}
+          />
+          <ProviderCard
+            title="GCP"
+            icon={Server}
+            provider={costs.data?.gcp}
+            accent={PROVIDER_TONE.gcp}
+          />
+        </div>
+      )}
+
+      {usage.data && (
+        <Card title="Usage by feature" subtitle="Events in the last 30 days">
+          <UsageBars byFeature={usage.data?.by_feature || {}} />
         </Card>
-        <Card title="Usage events" subtitle="Last 30 days">
-          <LineChart data={usage.data?.points || []} color="var(--blue)" />
-        </Card>
-      </div>
-
-      {/* Cloud providers — split AWS + GCP */}
-      <div className="grid grid-2" style={{ marginBottom: "var(--space-5)" }}>
-        <ProviderCard
-          title="AWS"
-          icon={Cloud}
-          tone="warning"
-          provider={costs.data?.aws}
-          accent="#ff9f0a"
-        />
-        <ProviderCard
-          title="GCP"
-          icon={Server}
-          tone="info"
-          provider={costs.data?.gcp}
-          accent="#0a84ff"
-        />
-      </div>
-
-      <Card title="Usage by feature" subtitle="Events in the last 30 days">
-        <UsageBars byFeature={usage.data?.by_feature || {}} />
-      </Card>
+      )}
     </div>
   );
 }
+
+/* ----------------------------- KPI grid ------------------------------ */
+
+function KpiGrid({ data }) {
+  const o = data || {};
+  return (
+    <div className="grid grid-4" style={{ marginBottom: "var(--space-5)" }}>
+      <StatCard label="Total users" value={o.total_users} icon={Users} tone="info" />
+      <StatCard
+        label="New users (7d)"
+        value={o.new_users_7d}
+        icon={UserPlus}
+        tone="success"
+        hint={`${formatNumber(o.new_users_30d)} in 30d`}
+      />
+      <StatCard label="Active (24h)" value={o.active_users_24h} icon={Activity} tone="warning" />
+      <StatCard
+        label="Active (30d)"
+        value={o.active_users_30d}
+        icon={Flame}
+        tone="danger"
+        hint={`${formatNumber(o.active_users_7d)} in 7d`}
+      />
+      <StatCard label="Paying users" value={o.paying_users} icon={Wallet} />
+      <StatCard
+        label="MRR"
+        value={formatCurrency(o.mrr_usd)}
+        icon={CircleDollarSign}
+        tone="success"
+        formatter={(v) => v}
+      />
+      <StatCard
+        label="Credits used (7d)"
+        value={o.credits_consumed_7d}
+        icon={Zap}
+        tone="warning"
+        hint={`${formatNumber(o.total_events_7d)} events`}
+      />
+      <StatCard label="Admins" value={o.admins} icon={ShieldCheck} />
+    </div>
+  );
+}
+
+/* -------------------------- Financial health ------------------------- */
 
 function FinancialHealth({ fin }) {
   const revenue = fin.revenue.total;
@@ -131,10 +165,13 @@ function FinancialHealth({ fin }) {
   const profitable = profit >= 0;
   const perUser = fin.per_user;
 
-  const revenueVsCost = [
-    { label: "Revenue", value: revenue, color: "#30d158" },
-    { label: "Cost", value: cost, color: "#ff453a" },
-  ];
+  const revenueVsCost = useMemo(
+    () => [
+      { label: "Revenue", value: revenue, color: "#30d158" },
+      { label: "Cost", value: cost, color: "#ff453a" },
+    ],
+    [revenue, cost]
+  );
 
   return (
     <Card
@@ -142,14 +179,23 @@ function FinancialHealth({ fin }) {
       subtitle={`Real numbers · last ${fin.range_days} days`}
       actions={
         <Badge tone={profitable ? "success" : "danger"}>
-          {profitable ? <TrendingUp size={10} style={{ marginRight: 4 }} /> : <TrendingDown size={10} style={{ marginRight: 4 }} />}
+          {profitable ? (
+            <TrendingUp size={10} style={{ marginRight: 4 }} />
+          ) : (
+            <TrendingDown size={10} style={{ marginRight: 4 }} />
+          )}
           {profitable ? "Profitable" : "Loss"} · {margin}%
         </Badge>
       }
     >
       <div className="grid grid-4" style={{ gap: "var(--space-4)", marginBottom: 18 }}>
         <MoneyTile label="Revenue" value={revenue} tone="success" sub={`MRR ${formatCurrency(fin.revenue.mrr)}`} />
-        <MoneyTile label="Total cost" value={cost} tone="danger" sub={`${fin.cost.infra_total > 0 ? `infra ${formatCurrency(fin.cost.infra_total)} · ` : ""}AI ${formatCurrency(fin.cost.ai_models_total)}`} />
+        <MoneyTile
+          label="Total cost"
+          value={cost}
+          tone="danger"
+          sub={`${fin.cost.infra_total > 0 ? `infra ${formatCurrency(fin.cost.infra_total)} · ` : ""}AI ${formatCurrency(fin.cost.ai_models_total)}`}
+        />
         <MoneyTile
           label="Profit"
           value={profit}
@@ -157,14 +203,17 @@ function FinancialHealth({ fin }) {
           sub={`${margin}% margin`}
           big
         />
-        <MoneyTile label="ARPU" value={perUser.arpu} tone="info" sub={`${perUser.paying_users} paying / ${perUser.total_users} total`} />
+        <MoneyTile
+          label="ARPU"
+          value={perUser.arpu}
+          tone="info"
+          sub={`${perUser.paying_users} paying / ${perUser.total_users} total`}
+        />
       </div>
 
       <div className="grid grid-3">
         <div>
-          <div style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-            Revenue vs cost
-          </div>
+          <div className="dash-section-label">Revenue vs cost</div>
           <PieChart
             data={revenueVsCost}
             size={180}
@@ -176,9 +225,7 @@ function FinancialHealth({ fin }) {
           />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-            Cost breakdown
-          </div>
+          <div className="dash-section-label">Cost breakdown</div>
           <PieChart
             data={fin.cost.breakdown_pie || []}
             size={180}
@@ -189,19 +236,17 @@ function FinancialHealth({ fin }) {
           />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-            Per-user economics
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="dash-section-label">Per-user economics</div>
+          <div className="dash-stat-stack">
             <InlineStat icon={Users2} label="Paying" value={`${perUser.paying_users} / ${perUser.total_users}`} />
             <InlineStat icon={Activity} label="Active (30d)" value={perUser.active_users} formatter={formatNumber} />
             <InlineStat icon={Wallet} label="ARPU (paying)" value={perUser.arpu} formatter={formatCurrency} tone="success" />
             <InlineStat icon={Zap} label="Cost / active" value={perUser.cost_per_active_user} formatter={formatCurrency} tone="danger" />
             <InlineStat icon={Users2} label="Cost / user (all)" value={perUser.cost_per_user} formatter={formatCurrency} />
           </div>
-          <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--bg-tertiary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <Sparkles size={14} style={{ color: "var(--accent-light)", marginTop: 2, flexShrink: 0 }} />
-            <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+          <div className="dash-info-tip">
+            <Sparkles size={14} className="dash-info-tip-icon" />
+            <div className="dash-info-tip-body">
               AI cost uses <code>cost_usd.&lt;feature&gt;</code> in AppConfig (falls back to defaults).
               Paddle fees approximated at 5% + $0.50/txn.
             </div>
@@ -213,57 +258,46 @@ function FinancialHealth({ fin }) {
 }
 
 function MoneyTile({ label, value, sub, tone = "neutral", big = false }) {
-  const color =
-    tone === "success" ? "var(--green)"
-      : tone === "danger" ? "var(--red)"
-        : tone === "info" ? "var(--accent-light)"
-          : "var(--text-primary)";
   return (
-    <div style={{
-      padding: 16,
-      background: "var(--bg-tertiary)",
-      border: "1px solid var(--border)",
-      borderRadius: "var(--radius-md)",
-      transition: "transform var(--motion) var(--spring), border-color var(--motion-fast) var(--ease)",
-    }}>
-      <div style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
-      <div style={{ fontSize: big ? 30 : 24, fontWeight: 700, color, marginTop: 6, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>
-        {formatCurrency(value)}
-      </div>
-      <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>{sub}</div>
+    <div className={`dash-money-tile tone-${tone}${big ? " is-big" : ""}`}>
+      <div className="dash-money-tile-label">{label}</div>
+      <div className="dash-money-tile-value">{formatCurrency(value)}</div>
+      <div className="dash-money-tile-sub">{sub}</div>
     </div>
   );
 }
 
 function InlineStat({ icon: Icon, label, value, formatter = (v) => v, tone }) {
-  const color =
-    tone === "success" ? "var(--green)"
-      : tone === "danger" ? "var(--red)"
-        : "var(--text-primary)";
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "var(--text-secondary)", fontSize: 12 }}>
-        <Icon size={13} /> {label}
+    <div className="dash-inline-stat">
+      <span className="dash-inline-stat-key">
+        <Icon size={13} aria-hidden="true" /> {label}
       </span>
-      <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color, fontSize: 13 }}>
+      <span className={`dash-inline-stat-val${tone ? ` tone-${tone}` : ""}`}>
         {typeof value === "string" ? value : formatter(value)}
       </span>
     </div>
   );
 }
 
-function ProviderCard({ title, icon: Icon, tone, provider = {}, accent }) {
-  const status = provider.status;
+/* --------------------------- Provider card --------------------------- */
+
+function ProviderCard({ title, icon: Icon, provider, accent }) {
+  const p = provider || {};
+  const status = p.status;
   const isOk = status === "ok";
   const isErr = status === "error";
-  const total = provider.total_usd || 0;
-  const daily = provider.daily || [];
-  const services = provider.by_service || [];
+  const total = p.total_usd || 0;
+  const daily = p.daily || [];
+  const services = p.by_service || [];
+  const maxService = services.length
+    ? Math.max(...services.map((s) => Number(s.value) || 0))
+    : 0;
 
   return (
     <Card
       title={title}
-      subtitle={provider.days ? `Last ${provider.days} days` : "Infrastructure spend"}
+      subtitle={p.days ? `Last ${p.days} days` : "Infrastructure spend"}
       actions={
         <Badge tone={isOk ? "success" : isErr ? "danger" : "neutral"}>
           <Icon size={10} style={{ marginRight: 4 }} />
@@ -272,65 +306,52 @@ function ProviderCard({ title, icon: Icon, tone, provider = {}, accent }) {
       }
     >
       {!isOk ? (
-        <div style={{
-          padding: 24, textAlign: "center", color: "var(--text-secondary)",
-          background: "var(--bg-tertiary)", borderRadius: "var(--radius-md)",
-          border: "1px dashed var(--border)", fontSize: 13,
-        }}>
+        <div className="dash-provider-empty">
           {isErr ? (
-            <div>
-              <div style={{ color: "var(--red)", marginBottom: 6, fontWeight: 600 }}>Error</div>
-              <div style={{ fontSize: 12 }}>{provider.error}</div>
-            </div>
+            <>
+              <div className="dash-provider-empty-error">Error</div>
+              <div className="dash-provider-empty-detail">{p.error}</div>
+            </>
           ) : (
-            <div>
-              <Icon size={22} style={{ color: accent, opacity: 0.7, marginBottom: 8 }} />
+            <>
+              <Icon size={22} style={{ color: accent, opacity: 0.7, marginBottom: 8 }} aria-hidden="true" />
               <div>Not yet connected.</div>
-              <div style={{ fontSize: 11, marginTop: 4 }}>See <b>Config → Cloud costs</b> for setup.</div>
-            </div>
+              <div className="dash-provider-empty-hint">See <b>Config → Cloud costs</b> for setup.</div>
+            </>
           )}
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div className="dash-provider">
           <div>
-            <div style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
-              Daily
-            </div>
+            <div className="dash-section-label">Daily</div>
             <LineChart data={daily} color={accent} height={160} />
-            <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text-tertiary)" }}>
+            <div className="dash-provider-total">
               <span>Total</span>
-              <span style={{ fontWeight: 600, color: "var(--text-primary)", fontVariantNumeric: "tabular-nums" }}>
-                {formatCurrency(total)}
-              </span>
+              <span className="dash-provider-total-value">{formatCurrency(total)}</span>
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
-              Top services
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {services.slice(0, 6).map((s, i) => (
-                <div key={`${s.label}-${i}`} style={{ display: "grid", gridTemplateColumns: "1fr 60px", gap: 8, alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 12, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {s.label}
+            <div className="dash-section-label">Top services</div>
+            <div className="dash-services">
+              {services.slice(0, 6).map((s, i) => {
+                const pct = maxService > 0 ? (Number(s.value) / maxService) * 100 : 0;
+                return (
+                  <div key={`${s.label}-${i}`} className="dash-service-row">
+                    <div>
+                      <div className="dash-service-name">{s.label}</div>
+                      <div className="dash-service-bar">
+                        <div
+                          className="dash-service-bar-fill"
+                          style={{ width: `${Math.max(4, pct)}%`, background: accent }}
+                        />
+                      </div>
                     </div>
-                    <div style={{ height: 4, background: "var(--bg-tertiary)", borderRadius: 4, marginTop: 4, overflow: "hidden" }}>
-                      <div style={{
-                        height: "100%",
-                        width: `${Math.max(4, (Number(s.value) / Math.max(...services.map((x) => Number(x.value)))) * 100)}%`,
-                        background: accent,
-                        borderRadius: 4,
-                      }} />
-                    </div>
+                    <span className="dash-service-value">{formatCurrency(s.value)}</span>
                   </div>
-                  <span style={{ textAlign: "right", fontSize: 12, fontVariantNumeric: "tabular-nums", color: "var(--text-secondary)" }}>
-                    {formatCurrency(s.value)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
               {services.length === 0 && (
-                <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>No service data yet.</div>
+                <div className="dash-service-empty">No service data yet.</div>
               )}
             </div>
           </div>
@@ -340,35 +361,30 @@ function ProviderCard({ title, icon: Icon, tone, provider = {}, accent }) {
   );
 }
 
+/* ---------------------------- Usage bars ----------------------------- */
+
 function UsageBars({ byFeature }) {
-  const entries = Object.entries(byFeature).sort((a, b) => b[1] - a[1]);
-  const max = Math.max(1, ...entries.map(([, v]) => v));
-  if (entries.length === 0)
+  const { entries, max } = useMemo(() => {
+    const e = Object.entries(byFeature).sort((a, b) => b[1] - a[1]);
+    return { entries: e, max: Math.max(1, ...e.map(([, v]) => v)) };
+  }, [byFeature]);
+
+  if (entries.length === 0) {
     return (
       <div style={{ color: "var(--text-secondary)", fontSize: 13, padding: "16px 0" }}>
         No events recorded yet.
       </div>
     );
+  }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="dash-bars">
       {entries.map(([feat, count]) => (
-        <div key={feat} style={{ display: "grid", gridTemplateColumns: "180px 1fr 60px", gap: 12, alignItems: "center" }}>
-          <span style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
-            {feat}
-          </span>
-          <div style={{ background: "var(--bg-tertiary)", height: 8, borderRadius: 999, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${(count / max) * 100}%`,
-                height: "100%",
-                background: "linear-gradient(90deg, var(--accent), var(--blue))",
-                transition: "width var(--motion) var(--ease)",
-              }}
-            />
+        <div key={feat} className="dash-bar-row">
+          <span className="dash-bar-label">{feat}</span>
+          <div className="dash-bar-track">
+            <div className="dash-bar-fill" style={{ width: `${(count / max) * 100}%` }} />
           </div>
-          <span style={{ fontSize: 13, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-            {formatNumber(count)}
-          </span>
+          <span className="dash-bar-value">{formatNumber(count)}</span>
         </div>
       ))}
     </div>

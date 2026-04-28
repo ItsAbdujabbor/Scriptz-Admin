@@ -1,0 +1,173 @@
+/* Dashboard-specific layout pieces. Tokens come from theme.css. */
+
+.dash-section-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+/* Money tile — used in the financial-health header */
+.dash-money-tile {
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.dash-money-tile-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.dash-money-tile-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 6px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.dash-money-tile.is-big .dash-money-tile-value { font-size: 30px; }
+.dash-money-tile.tone-success .dash-money-tile-value { color: var(--green); }
+.dash-money-tile.tone-danger  .dash-money-tile-value { color: var(--red); }
+.dash-money-tile.tone-info    .dash-money-tile-value { color: var(--accent-light); }
+.dash-money-tile-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+/* Inline label/value rows in the per-user column */
+.dash-inline-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dash-inline-stat-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.dash-inline-stat-val {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.dash-inline-stat-val.tone-success { color: var(--green); }
+.dash-inline-stat-val.tone-danger  { color: var(--red); }
+
+.dash-stat-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dash-info-tip {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.dash-info-tip-icon { color: var(--accent-light); margin-top: 2px; flex-shrink: 0; }
+.dash-info-tip-body {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Provider card grid */
+.dash-provider {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.dash-provider-total {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.dash-provider-total-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.dash-provider-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  font-size: 13px;
+}
+.dash-provider-empty-error { color: var(--red); margin-bottom: 6px; font-weight: 600; }
+.dash-provider-empty-detail { font-size: 12px; }
+.dash-provider-empty-hint { font-size: 11px; margin-top: 4px; }
+
+.dash-services { display: flex; flex-direction: column; gap: 6px; }
+.dash-service-row {
+  display: grid;
+  grid-template-columns: 1fr 60px;
+  gap: 8px;
+  align-items: center;
+}
+.dash-service-name {
+  font-size: 12px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-service-bar {
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.dash-service-bar-fill { height: 100%; border-radius: 4px; }
+.dash-service-value {
+  text-align: right;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+.dash-service-empty { font-size: 12px; color: var(--text-tertiary); }
+
+/* Usage-by-feature bars */
+.dash-bars { display: flex; flex-direction: column; gap: 10px; }
+.dash-bar-row {
+  display: grid;
+  grid-template-columns: 180px 1fr 60px;
+  gap: 12px;
+  align-items: center;
+}
+.dash-bar-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+.dash-bar-track {
+  background: var(--bg-tertiary);
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.dash-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--blue));
+  transition: width var(--motion) var(--ease);
+}
+.dash-bar-value { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }

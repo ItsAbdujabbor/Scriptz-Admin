@@ -18,6 +18,14 @@ const BUCKETS = [
   { key: "10m", label: "10M+", min: 10_000_000 },
 ];
 
+// Auto-refresh cadences. React Query's default `refetchIntervalInBackground:
+// false` pauses these timers when the browser tab is hidden, so an admin
+// who walks away triggers no work — and the matching server-side SWR cache
+// (services/admin/dashboard_cache.py) absorbs the load if multiple admins
+// poll concurrently.
+const REFRESH_LIST_MS = 2 * 60_000;     // bucket lists move slowly
+const REFRESH_SUMMARY_MS = 5 * 60_000;  // counts barely change minute-to-minute
+
 export default function Channels() {
   const [bucket, setBucket] = useState("all");
   const [q, setQ] = useState("");
@@ -27,12 +35,16 @@ export default function Channels() {
   const { data: summary } = useQuery({
     queryKey: qk.channelsSummary(10_000),
     queryFn: () => channelsApi.summary({ min_subs: 10_000 }),
+    refetchInterval: REFRESH_SUMMARY_MS,
   });
 
   const params = { min_subs: min, q: q || undefined, page, page_size: 50 };
   const { data, isLoading } = useQuery({
     queryKey: qk.channels(params),
     queryFn: () => channelsApi.list(params),
+    // Don't poll while the admin is typing a search — each keystroke
+    // creates a unique cache key on both client and server.
+    refetchInterval: q ? false : REFRESH_LIST_MS,
   });
 
   const pieData = summary

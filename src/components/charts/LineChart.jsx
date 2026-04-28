@@ -1,8 +1,14 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import "./LineChart.css";
 
-export default function LineChart({ data = [], height = 180, valueKey = "value", color = "var(--accent)" }) {
-  const { path, area, max, points } = useMemo(() => {
+export default function LineChart({
+  data = [],
+  height = 180,
+  valueKey = "value",
+  color = "var(--accent)",
+}) {
+  const gradId = useId();
+  const { path, area } = useMemo(() => {
     const values = data.map((d) => Number(d[valueKey]) || 0);
     const max = Math.max(1, ...values);
     const w = 100;
@@ -16,21 +22,21 @@ export default function LineChart({ data = [], height = 180, valueKey = "value",
       pts.length > 1
         ? `${path} L ${pts[pts.length - 1][0]} ${h} L 0 ${h} Z`
         : "";
-    return { path, area, max, points: pts };
+    return { path, area };
   }, [data, valueKey]);
 
   if (!data.length) return <div className="ui-linechart-empty" style={{ height }}>No data</div>;
 
   return (
     <div className="ui-linechart" style={{ height }}>
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <defs>
-          <linearGradient id="ui-line-grad" x1="0" x2="0" y1="0" y2="1">
+          <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity="0.35" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
-        {area && <path d={area} fill="url(#ui-line-grad)" />}
+        {area && <path d={area} fill={`url(#${gradId})`} />}
         <path d={path} fill="none" stroke={color} strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
       </svg>
       <div className="ui-linechart-axis">

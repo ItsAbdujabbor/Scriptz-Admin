@@ -1,0 +1,39 @@
+.ui-skeleton {
+  display: block;
+  position: relative;
+  background: var(--fill-2);
+  overflow: hidden;
+  isolation: isolate;
+}
+.ui-skeleton.is-inline { display: inline-block; vertical-align: middle; }
+
+/* Shimmer is a single GPU-cheap layer: a translucent highlight that
+   slides across via transform: translateX(). The base fill stays put. */
+.ui-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: ui-skeleton-shimmer 1.6s linear infinite;
+  will-change: transform;
+}
+
+@keyframes ui-skeleton-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton::after { animation: none; }
+}
+
+.ui-skeleton-text {
+  display: flex;
+  flex-direction: column;
+}
