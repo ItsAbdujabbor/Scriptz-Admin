@@ -290,7 +290,7 @@ function EnvTab() {
     ["Rate limiting", data.rate_limit_enabled ? "enabled" : "disabled"],
     ["Supabase", data.supabase_configured ? "configured" : "not configured"],
     ["Paddle", data.paddle_env || "—"],
-    ["Gemini", data.gemini_configured ? "configured" : "not configured"],
+    ["Text provider", data.text_provider_configured ? "configured" : "not configured"],
     ["Frontend base URL", data.frontend_base_url || "—"],
   ];
   return (
