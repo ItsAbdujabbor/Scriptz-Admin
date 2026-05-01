@@ -13,6 +13,7 @@ export const qk = {
   cloudCosts: (days) => ["cloud-costs", days],
   finance: (days) => ["finance", days],
   styles: (params) => ["styles", params || {}],
+  adminPersonas: (params) => ["admin-personas", params || {}],
   templates: (params) => ["templates", params || {}],
   feedback: (params) => ["feedback", params || {}],
   audit: (params) => ["audit", params || {}],

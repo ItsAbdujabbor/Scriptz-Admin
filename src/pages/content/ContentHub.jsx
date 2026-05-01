@@ -1,14 +1,13 @@
 import { useState } from "react";
 import Tabs from "../../components/ui/Tabs";
 import StylesPanel from "./StylesPanel";
-import TemplatesPanel from "./TemplatesPanel";
+import PersonasPanel from "./PersonasPanel";
 import FeedbackPanel from "./FeedbackPanel";
 
-// Personas are no longer managed from the admin side. Every persona row
-// is scoped to its creator via `user_id` and is only visible to that
-// user inside the end-user app. Admins can run the one-shot
-// `/api/admin/personas/purge-stock` endpoint from the API to wipe
-// legacy `user_id IS NULL` rows.
+// Thumbnail templates were retired — the user-facing app no longer
+// surfaces them, so the admin tab was dropped from this hub. Demo
+// characters (admin-curated personas) and stock styles ARE shared
+// across all users; both are managed here.
 export default function ContentHub() {
   const [tab, setTab] = useState("styles");
   return (
@@ -19,13 +18,13 @@ export default function ContentHub() {
           onChange={setTab}
           tabs={[
             { value: "styles", label: "Styles" },
-            { value: "templates", label: "Thumbnail templates" },
+            { value: "characters", label: "Characters" },
             { value: "feedback", label: "Feedback" },
           ]}
         />
       </div>
       {tab === "styles" && <StylesPanel />}
-      {tab === "templates" && <TemplatesPanel />}
+      {tab === "characters" && <PersonasPanel />}
       {tab === "feedback" && <FeedbackPanel />}
     </div>
   );
